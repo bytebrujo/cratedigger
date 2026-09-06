@@ -1,0 +1,27 @@
+[package]
+name = "mcp-crates"
+version = "0.1.0"
+edition = "2024"
+rust-version = "1.98.1"
+description = "A stdio MCP server for live Rust crate ecosystem lookups"
+license = "MIT OR Apache-2.0"
+readme = "README.md"
+repository = "https://github.com/bytebrujo/cratedigger"
+authors = ["bytebrujo <santiagoreyesanti@gmail.com>"]
+keywords = ["mcp", "crates", "rust", "stdio"]
+categories = ["development-tools"]
+# Enabled only after the Phase 4 release review.
+publish = false
+
+[dependencies]
+reqwest = { version = "0.13.4", default-features = false, features = ["rustls"] }
+rmcp = { version = "=3.2.0", default-features = false, features = ["server", "transport-io"] }
+schemars = "1"
+semver = "1"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+thiserror = "2"
+tokio = { version = "1", features = ["macros", "rt-multi-thread", "io-util", "io-std", "time"] }
+
+[dev-dependencies]
+tokio = { version = "1", features = ["process", "test-util"] }
