@@ -10,8 +10,7 @@ repository = "https://github.com/bytebrujo/cratedigger"
 authors = ["bytebrujo <santiagoreyesanti@gmail.com>"]
 keywords = ["mcp", "crates", "rust", "stdio"]
 categories = ["development-tools"]
-# Enabled only after the Phase 4 release review.
-publish = false
+publish = ["crates-io"]
 
 [dependencies]
 reqwest = { version = "0.13.4", default-features = false, features = ["rustls"] }

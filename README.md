@@ -4,11 +4,10 @@ A Rust MCP server over stdio for crates.io and docs.rs lookups. This project
 tests whether an agent can maintain a small, strongly checked tool through
 upstream SDK and API changes until 2027-03-31.
 
-**Current status: Phase 3 verified locally.** All four P0 tools work through
-the shared crates.io client and have been checked with the official MCP
-Inspector. The crate is not published yet. The repository is
-[bytebrujo/cratedigger](https://github.com/bytebrujo/cratedigger), private while
-setup and review are completed.
+**Current status: v0.1.0 release preparation.** All four tools passed local,
+Linux/macOS CI and live MCP-client verification. The repository is public at
+[bytebrujo/cratedigger](https://github.com/bytebrujo/cratedigger), with protected
+main. The crates.io upload is pending; see [release status](docs/RELEASE.md).
 
 ## Run locally
 
@@ -156,15 +155,14 @@ edited. The exact monthly prompt is in [docs/MONTHLY_PROMPT.md](docs/MONTHLY_PRO
 
 All code changes must arrive through pull requests with green Linux and macOS
 `make check` jobs. GitHub branch protection must require both checks and PRs,
-include administrators, and disallow force pushes and deletion. GitHub currently
-blocks protection for this private repository on its plan; merging is on hold
-until public visibility or a supporting plan enables these requirements.
+include administrators, and disallow force pushes and deletion. These
+protections are enabled on the public repository.
 
 The release workflow checks that a tag matches Cargo.toml and a dated
-Keep a Changelog entry, runs all gates on both platforms, then publishes with
-the `CARGO_REGISTRY_TOKEN` repository secret. Publication is disabled in
-Cargo.toml until the release phase. No v0.1.0 changelog entry exists yet, so a
-premature tag fails before publication.
+Keep a Changelog entry, requires the tagged commit to be on main, runs all
+gates on both platforms, then publishes with the `CARGO_REGISTRY_TOKEN`
+repository secret. Publishing is restricted to crates.io. A release tag must
+not be pushed until the secret is configured and the release PR has green CI.
 
 The weekly workflow runs live smoke and opens a `maintenance` issue on failure.
 Set its Actions variable `MCP_CRATES_USER_AGENT` to the agreed public identity.

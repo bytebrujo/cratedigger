@@ -17,15 +17,23 @@ jobs:
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
       - name: Validate release version and changelog
         env:
           RELEASE_TAG: ${{ github.ref_name }}
         run: |
+          git merge-base --is-ancestor "$GITHUB_SHA" origin/main
           version="${RELEASE_TAG#v}"
           test "$RELEASE_TAG" = "v$version"
           test "$(sed -n 's/^version = "\([^"]*\)"$/\1/p' Cargo.toml | head -1)" = "$version"
           grep -F "## [$version] - " CHANGELOG.md
       - run: rustup show
+      - name: Cache pinned cargo-deny binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-deny
+          key: cargo-deny-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'Makefile') }}
       - run: make check
   publish:
     needs: check
@@ -33,6 +41,14 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+      - name: Require publishing credential
+        env:
+          CARGO_REGISTRY_TOKEN: ${{ secrets.CARGO_REGISTRY_TOKEN }}
+        run: |
+          if [ -z "$CARGO_REGISTRY_TOKEN" ]; then
+            echo '::error::Configure the CARGO_REGISTRY_TOKEN Actions secret before releasing.'
+            exit 1
+          fi
       - run: rustup show
       - name: Publish checked release
         run: cargo publish --locked

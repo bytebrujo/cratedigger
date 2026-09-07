@@ -47,6 +47,11 @@ jobs:
       - uses: actions/checkout@v4
       - run: rustup show
       - run: cargo update
+      - name: Cache pinned cargo-deny binary
+        uses: actions/cache@v4
+        with:
+          path: ~/.cargo/bin/cargo-deny
+          key: cargo-deny-${{ runner.os }}-${{ runner.arch }}-${{ hashFiles('rust-toolchain.toml', 'Makefile') }}
       - run: make check
       - name: Ensure maintenance label
         env:
