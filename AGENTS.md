@@ -71,3 +71,13 @@ are the contract. stdout is protocol-only; all logs are single-line JSON on stde
 - 2026-09-06: A source-free root commit is used only to establish the main
   branch as the first PR's base. All project files are introduced through the
   initial implementation PR; the empty bootstrap is not a buildable release.
+- 2026-09-07: The user authorized public visibility. The repository is public
+  and main protection is enabled with strict Linux/macOS checks, PRs,
+  administrator enforcement and no force pushes or deletion. The previous
+  private-repository API rejection is historical, not a current merge blocker.
+- 2026-09-07: Release tags must point to commits already on origin/main. Do
+  not push a release tag before the publishing secret exists and CI is green.
+  cargo publish --dry-run must pass before first publication.
+- 2026-09-07: Cache only the pinned cargo-deny executable in CI, keyed by OS,
+  architecture and toolchain/Makefile hashes. Never cache Cargo credentials.
+  make check still verifies the tool version and runs every gate on cache hits.
