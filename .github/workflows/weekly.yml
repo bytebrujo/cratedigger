@@ -1,0 +1,75 @@
+name: Weekly maintenance
+
+on:
+  schedule:
+    - cron: '17 3 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  live-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      issues: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup show
+      - name: Live upstream smoke
+        env:
+          MCP_CRATES_USER_AGENT: ${{ vars.MCP_CRATES_USER_AGENT }}
+        run: LIVE=1 cargo test --locked --test integration_stdio four_p0_tools_over_real_stdio -- --nocapture
+      - name: Open maintenance issue on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          gh label create maintenance --color 1d76db --description 'Dependency and upstream maintenance' --force
+          existing="$(gh issue list --state open --label maintenance --search 'Weekly live smoke failed in:title' --json number --jq 'length')"
+          if [ "$existing" = 0 ]; then
+            echo "Live smoke failed. Inspect $RUN_URL and follow docs/MONTHLY_PROMPT.md." > /tmp/smoke-issue.md
+            gh issue create --title 'Weekly live smoke failed' --label maintenance --body-file /tmp/smoke-issue.md
+          fi
+  dependencies:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+      pull-requests: write
+      issues: write
+      actions: write
+    steps:
+      - uses: actions/checkout@v4
+      - run: rustup show
+      - run: cargo update
+      - run: make check
+      - name: Ensure maintenance label
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh label create maintenance --color 1d76db --description 'Dependency and upstream maintenance' --force
+      - uses: peter-evans/create-pull-request@v7
+        id: dependency-pr
+        with:
+          branch: maintenance/dependencies
+          title: 'chore: update locked dependencies'
+          commit-message: 'chore: update locked dependencies'
+          body: |
+            Update Cargo.lock after passing make check. Review upstream changes
+            before merging. The exactly pinned MCP SDK is upgraded separately
+            after reading its changelog, as required by AGENTS.md.
+          labels: maintenance
+          add-paths: Cargo.lock
+      # GITHUB_TOKEN-created PRs do not automatically trigger pull_request CI.
+      # An explicit workflow_dispatch does, and checks the same branch commit.
+      - name: Run required checks on dependency branch
+        if: steps.dependency-pr.outputs.pull-request-number != ''
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: gh workflow run ci.yml --ref maintenance/dependencies
